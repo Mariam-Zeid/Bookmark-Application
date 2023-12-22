@@ -33,6 +33,62 @@ if (localStorage.getItem("bookmarksList") != null) {
   displayBookmarks();
 }
 
+// !================================ Validation ================================
+
+// ? Adding a specific title pattern for the site name (return boolean value)
+siteTitleInput.addEventListener("change", function () {
+  titleInput = siteTitleInput.value.trim();
+  // 0 to 2 occurrences of a space followed with one or more ASCII letters
+  const titlePattern = /^[a-zA-Z]{4,}(?: [a-zA-Z]+){0,2}$/;
+  titleValidation = titlePattern.test(titleInput) ? true : false;
+  console.log(titleValidation);
+});
+
+// ? Adding only valid URL (return boolean value)
+siteUrlInput.addEventListener("change", function () {
+  let urlInput = siteUrlInput.value.trim();
+  // Validate the URL
+  const urlPattern =
+    /^(https?|ftp):\/\/www\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+(\/[^\/]*)*$/;
+
+  // Make https:// optional if not provided
+  if (!urlInput.startsWith("https://") && !urlInput.startsWith("http://")) {
+    urlInput = `https://${urlInput}`;
+    siteUrlInput.value = urlInput;
+    console.log(siteUrlInput.value);
+  }
+
+  urlValidation = urlPattern.test(urlInput) ? true : false;
+  console.log(urlValidation);
+});
+
+// ? Closing alert for each specified modal (Success - Warning - Error)
+for (let i = 0; i < closeAlertBtns.length; i++) {
+  closeAlertBtns[i].addEventListener("click", function (e) {
+    alertModals[i].classList.replace("d-flex", "d-none");
+  });
+}
+
+function validateSite(site, index) {
+  if (site.siteTitle === "" || site.siteURL === "") {
+    warningAlert.classList.replace("d-none", "d-flex");
+    return false;
+  } else if (titleValidation && !urlValidation) {
+    errorMessage.innerHTML = "Invalid URL";
+    errorAlert.classList.replace("d-none", "d-flex");
+    return false;
+  } else if (!titleValidation && urlValidation) {
+    errorMessage.innerHTML = "Invalid Name";
+    errorAlert.classList.replace("d-none", "d-flex");
+    return false;
+  } else if (!titleValidation && !urlValidation) {
+    errorMessage.innerHTML = "Ensure all fields are filled correctly";
+    errorAlert.classList.replace("d-none", "d-flex");
+    return false;
+  }
+  return true;
+}
+
 // !================================ Functions ================================
 
 // ? Displaying and Hiding the message for an empty list
@@ -90,10 +146,13 @@ addSiteBtn.addEventListener("click", function () {
     siteUrl: siteUrlInput.value,
     siteDesc: siteDescriptionInput.value,
   };
-  bookmarksList.push(bookmark);
-  displayBookmarks();
-  clearInputs();
-  localStorage.setItem("bookmarksList", JSON.stringify(bookmarksList));
+  if (validateSite(bookmark)) {
+    successAlert.classList.replace("d-none", "d-flex");
+    bookmarksList.push(bookmark);
+    displayBookmarks();
+    clearInputs();
+    localStorage.setItem("bookmarksList", JSON.stringify(bookmarksList));
+  }
 });
 
 // ? Accessing a website using its URL.
@@ -125,13 +184,17 @@ updateSiteBtn.addEventListener("click", function () {
   let updatedSite = {
     siteTitle: siteTitleInput.value,
     siteUrl: siteUrlInput.value,
-    siteDesc: siteDescriptionInput.value
+    siteDesc: siteDescriptionInput.value,
   };
 
-  bookmarksList[currentSiteIndex] = updatedSite;
-  displayBookmarks();
-  clearInputs();
-  localStorage.setItem("bookmarksList", JSON.stringify(bookmarksList));
-  updateSiteBtn.classList.add("d-none");
-  addSiteBtn.classList.remove("d-none");
+  if (validateSite(updatedSite, currentSiteIndex)) {
+    successMessage.innerHTML = `Site has been updated Successfully`;
+    successAlert.classList.replace("d-none", "d-flex");
+    bookmarksList[currentSiteIndex] = updatedSite;
+    displayBookmarks();
+    clearInputs();
+    localStorage.setItem("bookmarksList", JSON.stringify(bookmarksList));
+    updateSiteBtn.classList.add("d-none");
+    addSiteBtn.classList.remove("d-none");
+  }
 });
